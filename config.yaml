@@ -1,0 +1,29 @@
+# AegisScan v3 Configuration
+# ─────────────────────────────────────────
+
+scanner:
+  default_timing: normal        # paranoid|sneaky|polite|normal|aggressive|insane
+  default_ports: top100         # any port spec (80,443 / 1-1000 / top100 / -)
+  grab_banners: true
+
+database:
+  path: aegisscan.db
+
+dashboard:
+  host: 127.0.0.1               # change to 0.0.0.0 to expose on LAN
+  port: 5000
+  enable_auth: false            # ENABLE this for production / 0.0.0.0 binding
+  auth_username: aegis
+  auth_password: ""             # set a strong password when enable_auth: true
+  secret_key: CHANGE_THIS_IN_PRODUCTION   # will be auto-rotated if still default
+
+logging:
+  level: INFO
+  file:
+    enabled: true
+    path: logs/aegisscan.log
+    max_bytes: 10485760
+    backup_count: 5
+  console:
+    enabled: true
+    colored: true

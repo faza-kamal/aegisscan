@@ -1,0 +1,300 @@
+# Nmap service detection probe list -*- mode: fundamental; -*-
+# $Id$
+#
+# This is a database of custom probes and expected responses that the
+# Nmap Security Scanner ( https://nmap.org ) uses to
+# identify what services (eg http, smtp, dns, etc.) are listening on
+# open ports.  Contributions to this database are welcome.
+# Instructions for obtaining and submitting service detection fingerprints can
+# be found in the Nmap Network Scanning book and online at
+# https://nmap.org/book/vscan-community.html
+#
+# This collection of probe data is (C) 1998-2024 by Insecure.Com
+# LLC.  It is distributed under the Nmap Public Source license as
+# provided in the LICENSE file of the source distribution or at
+# https://nmap.org/data/LICENSE .  Note that this license
+# requires you to license your own work under a compatible open source
+# license.  If you wish to embed Nmap technology into proprietary
+# software, we sell alternative licenses (contact sales@insecure.com).
+# Dozens of software vendors already license Nmap technology such as
+# host discovery, port scanning, OS detection, and version detection.
+# For more details, see https://nmap.org/book/man-legal.html
+#
+# For details on how Nmap version detection works, why it was added,
+# the grammar of this file, and how to detect and contribute new
+# services, see https://nmap.org/book/vscan.html.
+
+# The Exclude directive takes a comma separated list of ports.
+# The format is exactly the same as the -p switch.
+Exclude T:9100-9107
+
+# This is the NULL probe that just compares any banners given to us
+##############################NEXT PROBE##############################
+Probe TCP NULL q||
+# Wait for at least 6 seconds for data.  It used to be 5, but some
+# smtp services have lately been instituting an artificial pause (see
+# FEATURE('greet_pause') in Sendmail, for example)
+totalwaitms 6000
+# If the service closes the connection before 3 seconds, it's probably
+# tcpwrapped. Adjust up or down depending on your false-positive rate.
+tcpwrappedms 3000
+
+match 1c-server m|^S\xf5\xc6\x1a{| p/1C:Enterprise business management server/
+
+match 3cx-tunnel m|^\x04\0\xfb\xffLAPK| p/3CX Tunnel Protocol/
+
+match 4d-server m|^\0\0\0H\0\0\0\x02.[^\0]*\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0$|s p/4th Dimension database server/ cpe:/a:4d_sas:4d/
+
+match aastra-pbx m|^BUSY$| p|Aastra/Mitel 400-series PBX service port|
+match acap m|^\* ACAP \(IMPLEMENTATION \"CommuniGate Pro ACAP (\d[-.\w]+)\"\) | p/CommuniGate Pro ACAP server/ v/$1/ i/for mail client preference sharing/ cpe:/a:stalker:communigate_pro:$1/
+match acarsd m|^g\0\0\0\x1b\0\0\0\0\0\0\0acarsd\t([\w._-]+)\tAPI-([\w._-]+)\)\0\0\0\x06\x05\0\0\0\0\0\0<\?xml | p/acarsd/ v/$1/ i/API $2/ cpe:/a:acarsd:acarsd:$1/
+match acmp m|^ACMP Server Version ([\w._-]+)\r\n| p/Aagon ACMP Inventory/ v/$1/
+
+match apachemq m|^\0\0..\x01ActiveMQ\0\0\0.\x01\0\0.*\x0cProviderName\t\0\x08ActiveMQ.*\x0fPlatformDetails\t..JVM: (\d[^,]*), [^,]*, Oracle Corporation, OS: Linux, (\d\.[\d.]+)[^,]*, ([\w_-]+).*\x0fProviderVersion\t..(\d[\w._-]*)|s p/ActiveMQ OpenWire transport/ v/$4/ i/Java $1; arch: $3/ o/Linux $2/ cpe:/a:apache:activemq:$4/ cpe:/o:linux:linux_kernel:$2/a
+match apachemq m|^\0\0..\x01ActiveMQ\0\0\0.\x01\0\0.*\x0cProviderName\t\0\x08ActiveMQ.*\x0fPlatformDetails\t..Java\0.*\x0fProviderVersion\t..(\d[\w._-]*)|s p/ActiveMQ OpenWire transport/ v/$1/ cpe:/a:apache:activemq:$1/
+match apachemq m|^\0\0..\x01ActiveMQ\0\0\0.\x01\0\0.*\x0fPlatformDetails\t..Java\0.*\x0cProviderName\t\0\x08ActiveMQ.*\x0fProviderVersion\t..(\d[\w._-]*)|s p/ActiveMQ OpenWire transport/ v/$1/ cpe:/a:apache:activemq:$1/
+# softmatches to get submissions
+softmatch apachemq m|^\0\0..\x01ActiveMQ\0\0\0.\x01\0\0.*\x0fPlatform| p/ActiveMQ OpenWire transport/
+softmatch apachemq m|^\0\0..\x01ActiveMQ\0\0\0.\x01\0\0.*\x0fProvider| p/ActiveMQ OpenWire transport/
+# For those that don't provide explicit versions, some heuristics:
+# AMQ-8412
+match apachemq m|^\0\0..\x01ActiveMQ\0\0\0.\x01\0\0.*\x0cMaxFrameSize\x06| p/ActiveMQ OpenWire transport/ v/5.16.4 or later/
+match apachemq m|^\0\0..\x01ActiveMQ\0| p/ActiveMQ OpenWire transport/ v/5.16.3 or earlier/
+
+
+# Microsoft ActiveSync Version 3.7 Build 3083 (It's used for syncing
+# my ipaq it disappears when you remove the ipaq.)
+match activesync m|^.\0\x01\0[^\0]\0[^\0]\0[^\0]\0[^\0]\0[^\0]\0.*\0\0\0$|s p/Microsoft ActiveSync/ o/Windows/ cpe:/a:microsoft:activesync/ cpe:/o:microsoft:windows/a
+match activesync m|^\(\0\0\0\x02\0\0\0\x03\0\0\0\+\0\0\x003\0\0\0\0\0\0\0\x04\0\0`\x01\0\0\xff\0\0\0\0\0\0\0\0\0\0\0$|s p/Citrix ActiveSync/ o/Windows/ cpe:/o:microsoft:windows/a
+
+match adabas-d m|^Adabas D Remote Control Server Version ([\d.]+) Date [\d-]+ \(key is [0-9a-f]+\)\r\nOK> | p/Adabas D database remote control/ v/$1/
+
+match adobe-crossdomain m|^<cross-domain-policy><allow-access-from domain='([^']*)' to-ports='([^']*)' /></cross-domain-policy>\0$| p/Adobe cross-domain policy/ i/domain: $1; ports: $2/
+# Missing trailing \0? Was like that in the submission.
+match adobe-crossdomain m|^<cross-domain-policy>[ \n]*<allow-access-from domain=\"([^\"]*)\" to-ports=\"([^\"]*)\" */>[ \n]*</cross-domain-policy>$|s p/Adobe cross-domain policy/ i/domain: $1; ports: $2/
+match adobe-crossdomain m|^<\?xml version=\"1\.0\"\?>\r\n<cross-domain-policy>\r\n    <site-control permitted-cross-domain-policies=\"master-only\"/>\r\n    <allow-access-from domain=\"\*\" to-ports=\"59160\"/>\r\n</cross-domain-policy>\0| p/Konica Minolta printer cross-domain-policy/
+# playbrassmonkey.com
+match adobe-crossdomain m|^<\?xml version=\"1\.0\"\?><cross-domain-policy><allow-access-from domain=\"\*\" to-ports=\"1008-49151\" /></cross-domain-policy>\0$| p/Brass Monkey cross-domain-policy/
+match adobe-crossdomain m|^<\?xml version="1\.0"\?>\r\n<!DOCTYPE cross-domain-policy SYSTEM "http://www\.adobe\.com/xml/dtds/cross-domain-policy\.dtd">\r\n<cross-domain-policy>\r\n <site-control permitted-cross-domain-policies="master-only"/>\r\n <allow-access-from domain="www\.facebook\.com" to-ports="443" />\r\n</cross-domain-policy>\r\n| p/Facebook cross-domain policy/
+softmatch adobe-crossdomain m|^<\?xml version=\"1\.0\"\?>.*<cross-domain-policy>|s
+
+match afsmain m|^\+Welcome to Ability FTP Server \(Admin\)\. \[20500\]\r\n| p/Code-Crafters Ability FTP Server afsmain admin/ o/Windows/ cpe:/a:code-crafters:ability_ftp_server/ cpe:/o:microsoft:windows/a
+
+match airserv-ng m|^\x05\0\0\x01.\0\0\0\0....\xff\xff\xff.\0\0\0\0\0\0\0.\0\0\0\0\0\x0fB@\0\0\0.\x80\0\0\0\xff\xff\xff\xff\xff\xff|s p/airserv-ng/ cpe:/a:aircrack-ng:airserv-ng/
+
+match altiris-agent m|^<\0r\0e\0s\0p\0o\0n\0s\0e\0>\0C\0o\0n\0n\0e\0c\0t\0e\0d\0 \0t\0o\0 [\0\d.]*<\0/\0r\0e\0s\0p\0o\0n\0s\0e\0>\0$| p/Altiris remote monitoring agent/
+
+# AMANDA index server 2.4.2p2 on Linux 2.4
+match amanda m|^220 ([-.\w]+) AMANDA index server \((\d[-.\w ]+)\) ready\.\r\n| p/Amanda backup system index server/ v/$2/ o/Unix/ h/$1/ cpe:/a:amanda:amanda:$2/
+match amanda m|^501 Could not read config file [^!\r\n]+!\r\n220 ([-.\w]+) AMANDA index server \(([-\w_.]+)\) ready\.\r\n| p/Amanda backup system index server/ v/$2/ i/broken: config file not found/ h/$1/ cpe:/a:amanda:amanda:$2/
+match amanda m|^ld\.so\.1: amandad: fatal: (libsunmath\.so\.1): open failed: No such file or directory\n$| p/Amanda backup system index server/ i/broken: $1 not found/ cpe:/a:amanda:amanda/
+match amanda m|^\n\*\* \(process:\d+\): CRITICAL \*\*: GLib version too old \(micro mismatch\): Amanda was compiled with glib-[\d.]+, but linking with ([\d.]+)\n| p/Amanda backup system index server/ i/broken: GLib $1 too old/ cpe:/a:amanda:amanda/
+
+match AndroMouse m|^AMServer$|s p/AndroMouse Android remote mouse server/
+
+match antivir m|^220 Symantec AntiVirus Scan Engine ready\.\r\n| p/Symantec AntiVirus Scan Engine/ cpe:/a:symantec:antivirus/ cpe:/a:symantec:antivirus_scan_engine/
+match antivir m|^200 NOD32SS ([\d.]+) \((\d+)\)\r\n| p/NOD32 AntiVirus/ v/$1 ($2)/ cpe:/a:eset:nod32_antivirus:$1/
+
+match anyremote m|^Set\(icons,M,6,forward,7,prev,8,stop,9,next,\*,question,0,pause,#,no\);Set\(font,small\);Set\(menu,replace,Playlist,Toggle Shuffle,Toggle Repeat\);Set\(icons,MPD,1,vol_down,2,mute,3,vol_up,4,rewind,5,play,6,forward,7,prev,8,stop,9,next,\*,question,0,pause,#,no\);Set\(font,small\);Set\(menu,replace,Playlist,Toggle Shuffle,Toggle Repeat\);$| p/anyRemote remote control daemon/
+
+match aperio-aaf m|^<aafMessage><aafInitRequest></aafInitRequest></aafMessage>| p/Aperio Algorithm Framework/
+
+match aplus m|^\x01\xff\0\xff\x01\x1d\0\xfd\0\n\x03\x05A\+ API \(([\d.]+)\) - CCS \(([\d.]+)\)\0| p/Cleo A+/ i/API $1; CSS $2/
+match app m|^\0\x01\0\x08\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x01\0\0\0\x02$| p/Cisco Application Peering Protocol/ d/load balancer/
+match appguard-db m|^200 Welkom bij de Appguard UserDatabase Server v([\d.]+)\r\nWhatsUP\? .{10}\r\n| p/App Appguard UserDatabase/ v/$1/ cpe:/a:app_bv:appguard_userdatabase:$1/
+
+# http://www.qosient.com/argus/
+match argus m|^\x80\x01\0\x80\0\x80\0\0\xe5az\xcb\0\0\0\0J...............\x02\0\x01\0\0<\x01,.......\0...\0\0\0\0\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff\xff\xff\x01\x04\0.\0\x80\x08|s p/Argus network analyzer/ v/3.0/
+
+match arkeia m|^\0`\0\x04\0\0\0\x1810\x000\x000\x00852224\0\0\0\0\0\0\0\0\0\0\0$| p/Arkeia Network Backup/
+# arkstats (part of arkeia-light 5.1.12 Backup server) on Linux 2.4.20
+match arkstats m|^\0`\0\x03\0\0\0\x1810\x000\x000\x00852224\0\0\0\0\0\0\0\0\0\0\0| p/Arkeia arkstats/
+match articy-server m|^# ACL Comm Layer V1\.0\r\nSalt: \S+@([\w.-]+)\r\nProcessors: \(ArticyWorkflowServer\)\r\nAuthenticators:| p/articy:draft server/ h/$1/ cpe:/a:nevigo:articy%3adraft/
+match artsd m|^MCOP\0\0\0.\0\0\0\x01\0\0\0\x10aRts/MCOP-([\d.]+)\0\0\0\0|s p/artsd/ i/MCOP $1/
+
+# Asterisk call manager - port 5038
+match asterisk m|^Asterisk Call Manager/([\d.]+)\r\n| p/Asterisk Call Manager/ v/$1/ cpe:/a:digium:asterisk:$1/
+match asterisk-proxy m|^Response: Follows\r\nPrivilege: Command\r\n--END COMMAND--\r\n| p/Asterisk Call Manager Proxy/ cpe:/a:digium:asterisk/
+
+match asus-nfc m|^\0\0\0\0\0\0\0\0\x01\0\0\0\0\0\0\0\0$| p/ASUS DTNFCServer/
+match asus-transfer m|^\0\0\0\0\0\0\0\0`\x06\0\0\0\0\0\0\x01\0P\x06\0{86}\xfe{510}\0\0\0\0\0\0\xfe{278}| p/ASUS Wi-Fi GO! file transfer/ cpe:/a:asus:wi-fi_go/
+
+match audit m|^Visionsoft Audit on Demand Service\r\nVersion: ([\d.]+)\r\n\r\n| p/Visionsoft Audit on Demand Service/ v/$1/ o/Windows/ cpe:/o:microsoft:windows/a
+match autosys m|^([\w._-]+)\nListener for [\w._-]+ AutoSysAdapter\nEOS\nExit Code = 1001\nIP <[\d.]+> is not authorized for this request\. Please contact your Web Administrator\.\nEOS\n| p/CA AutoSys RCS Listener/ v/$1/ i/not authorized/
+match avg m|^220-AVG7 Anti-Virus daemon mode scanner\r\n220-Program version ([\d.]+), engine (\d+)\r\n220-Virus Database: Version ([\d/.]+)  [-\d]+\r\n| p/AVG daemon mode/ v/$1 engine $2/ i/Virus DB $3/ cpe:/a:avg:anti-virus:$1/
+match avg m=^220-AVG daemon mode scanner \((?:AVG|SMTP)\)\r\n220-Program version ([\w._-]+)\r\n220-Virus Database: Version ([\w._/ -]+)\r\n220 Ready\r\n= p/AVG daemon mode/ v/$1/ i/Virus DB $2/ cpe:/a:avg:anti-virus:$1/
+match http-proxy m|^HTTP/1\.0 500 FAILED\r\nContent-Length: 0\r\n\r\n| p/Avast! anti-virus http proxy/ o/Windows/ cpe:/a:avast:antivirus/ cpe:/o:microsoft:windows/a
+
+match afbackup m|^afbackup ([\d.]+)\n\nAF's backup server ready\.\n| p/afbackup/ v/$1/
+match afbackup m|^.*, Warning on encryption key file `/etc/afbackup/cryptkey': File not readable\.\n.*, Warning: Ignoring file `/etc/afbackup/cryptkey', using compiled-in key\.\nafbackup 3\.4\n\nAF's backup server ready\.\n\x9d\x84\x0bZ$| p/afbackup/ i/using compiled-in key/
+
+match backdoor m|^220 jeem\.mail\.pv ESMTP\r\n| p/Jeem backdoor/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^\r\nUser Access Verification\r\n\r\nYour PassWord:| p/Jeem backdoor/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^ \r\n$| p/OptixPro backdoor/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^echo o [\d.]+ \d+ >s\r\necho common>> s\r\necho common>> s\r\necho bin>> s\r\necho get m220\.exe| p/JTRAM backdoor/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^220 Bot Server \(Win32\)\r\n$| p/Gaobot backdoor/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^PWD$| p/Subseven backdoor/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^\r\n\[RPL\]002\r\n$| p/Subseven backdoor/ i/**BACKDOOR**/
+match backdoor m|^=+\n= +RBackdoor ([\d.]+) | p/RBackdoor/ v/$1/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^220 Windrone Server \(Win32\)\r\n$| p/NerdBot backdoor/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^Zadej heslo:$| p/Czech "zadej heslo" backdoor/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^220 Reptile welcomes you\.\.\r\n| p/Darkmoon backdoor "reptile" ftpd/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^Sifre_EDIT$| p/ProRat trojan/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^MZ\x90\0\x03\0\0\0\x04\0\0\0\xff\xff\0\0\xb8\0\0\0\0\0\0\0@\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0fn\0\0\xd0\0\0\0\x0e\x1f\xba\x0e\0\xb4\t\xcd!\xb8\x01L\xcd!This program cannot be run in DOS mode\.| p/Korgo worm/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^\xfa\xcb\xd9\xd9\xdd\xc5\xd8\xce\xd6| p/Theef trojan/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^220 SSL Connection Established - Loading Protocol\.\.\.\.\r\n| p/dhcpse.exe/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^A-311 Death welcome\x001| p/Haxdoor trojan/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^220 CAFEiNi [-\w_.]+ FTP server\r\n$| p/CAFEiNi trojan/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m=^220 (?:Stny|fuck)Ftpd 0wns j0\r?\n= p/Kibuv.b worm/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^220 [Sf.][tu.][nc.][yk.][F.][t.][p.][d.] [0.][w.][n.][s.] [j.][0.]\r?\n|i p/Generic Kibuv worm/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^exec .* failed : No such file or directory\n$| p/netcat -e/ i/misconfigured/
+match backdoor m=220-Welcome!\r\n220-\x1b\[30m/\x1b\[31m#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#\xa4#                                                         \r\n220-\x1b\[30m\|          Current Time:  \x1b\[35m[^\r\n]*\r\n220-\x1b\[30m\|          Current Date:  \x1b\[35m[^\r\n]*\r\n220-\x1b\[30m\\\r\n= p/Windows trojan/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+# https://www.mysonicwall.com/sonicalert/searchresults.aspx?ev=article&id=733
+match backdoor m|^!\* LOLNOGTFO\nDUP\n| p/Linux.Flooder.SS C&C server/ i/**MALWARE**/ o/Linux/ cpe:/o:linux:linux_kernel/a
+match backdoor m|^x0$| p/Blackshades connection port/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^REQF\x0c1\x0c1$| p/Blackshades transfer port/ i/**BACKDOOR**/ o/Windows/ cpe:/o:microsoft:windows/a
+match backdoor m|^DT Key Logger -- Logging System Wide Key Presses\r\n| p/Deep Throat keylogger/ i/**MALWARE**/
+match backdoor m|^:: w4ck1ng-shell \(Private Build v([\w._-]+)\) bind shell backdoor :: \n\n| p/w4ck1ng-shell/ v/$1/ i/**BACKDOOR**/
+
+match bandwidth-test m|^\x01\0\0\0$| p/MikroTik bandwidth-test server/
+
+match barracuda-dcagent m|^Invalid Client IP\0\0$| p/Barracuda Domain Controller Agent/
+match barracuda-bcp m|^BCP-2\.0-Barracuda\n| p/Barracuda Web Security Gateway clustering protocol/ cpe:/a:barracuda:web_security_gateway/
+
+match bas m|^4dc\r\n$| p/Blackberry Administration Service - Native Code Container/
+match bas m|^4fd\r\n$| p/Blackberry Administration Service - Native Code Generator/
+match bas m|^507\r\n$| p/Blackberry Administration Service/
+
+match basestation m=^(?:MSG|SEL|ID|AIR|STA|CLK)(?:,[^,\r\n]*){9,21}\r\n= p/ADS-B flight data/
+
+# Port 2500: http://wiki.yobi.be/wiki/Belgian_eID
+match beidpcscd m|^\0\0\0\x1e\xffV\x92l\xfbUL\x87\xabw\x1f\xb2\n\xd8\xef/\0\0\0\x05Alive\0\0\0\x011| p/beidpcscd Belgian eID daemon/
+
+match bf2rcon m|^### Battlefield 2 ModManager Rcon v([\d.]+)\.\n### Digest seed: \w+\n\n| p/Battlefield 2 ModManager Remote Console/ v/$1/
+
+match bgp m|^\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\0\x15\x03\x06\x05| i/connection rejected/
+match bgp m|^\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\0\x1d\x01\x04........\0\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\0\x15\x03\x06\x05| i/open; connection rejected/
+match bgp m|^\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff..\x01\x04| i/open/
+
+# https://en.bitcoin.it/wiki/Protocol_specification#Message_structure
+# https://en.bitcoin.it/wiki/Protocol_specification#version
+# https://en.bitcoin.it/wiki/Changelog
+
+# Bitcoin "version" message prior to 20 February 2012.
+#  4 bytes magic number:    "\xf9\xbe\xb4\xd9"
+# 12 bytes command:         "version\0\0\0\0\0"
+#  4 bytes length
+#  4 bytes version
+#  8 bytes services bitfield: "\x01\0\0\0\0\0\0\0"
+#  8 bytes timestamp
+#  8 bytes client services count: "\x01\0\0\0\0\0\0\0"
+# 16 bytes IPv4-compatible client IP: "\0\0\0\0\0\0\0\0\0\0\xff\xff...."
+#  2 bytes client port
+#  8 bytes server services count: "\x01\0\0\0\0\0\0\0"
+# 16 bytes IPv4-compatible server IP: "\0\0\0\0\0\0\0\0\0\0\xff\xff...."
+#  2 bytes server port
+#  8 bytes random unique id
+#  1 byte  subversion string length
+# variable subversion string
+#  4 bytes last block
+
+# Version 0xc8 -> 200 -> 0.2.0
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x51\0\0\0\xc8\0\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0$|s p/Bitcoin digital currency server/ v/0.2.0/ cpe:/a:bitcoin:bitcoind:0.2.0/
+# Version 0x12c -> 300 -> 0.3.0
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x2c\x01\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.0/ cpe:/a:bitcoin:bitcoind:0.3.0/
+# Version 0x136 -> 310 -> 0.3.10
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x57\0\0\0\x36\x01\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.10/ cpe:/a:bitcoin:bitcoind:0.3.10/
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x57\0\0\0\x36\x01\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\x02(\..)....$|s p/Bitcoin digital currency server/ v/0.3.10$1/ cpe:/a:bitcoin:bitcoind:0.3.10$1/
+# Version 0x7bd4 -> 31700 -> 0.3.17
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\xd4\x7b\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.17/ cpe:/a:bitcoin:bitcoind:0.3.17/
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\xd4\x7b\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\x02(\..)....$|s p/Bitcoin digital currency server/ v/0.3.17$1/ cpe:/a:bitcoin:bitcoind:0.3.17$1/
+# Version 0x7c38 -> 31800 -> 0.3.18
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x38\x7c\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.18/ cpe:/a:bitcoin:bitcoind:0.3.18/
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x38\x7c\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\x02(\..)....$|s p/Bitcoin digital currency server/ v/0.3.18$1/ cpe:/a:bitcoin:bitcoind:0.3.18$1/
+# Version 0x7c9c -> 31900 -> 0.3.19
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x9c\x7c\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.19/ cpe:/a:bitcoin:bitcoind:0.3.19/
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x9c\x7c\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\x02(\..)....$|s p/Bitcoin digital currency server/ v/0.3.19$1/ cpe:/a:bitcoin:bitcoind:0.3.19$1/
+# Version 0x7d00 -> 32000 -> 0.3.20
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x00\x7d\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.20/ cpe:/a:bitcoin:bitcoind:0.3.20/
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x00\x7d\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\x02(\..)....$|s p/Bitcoin digital currency server/ v/0.3.20$1/ cpe:/a:bitcoin:bitcoind:0.3.20$1/
+# Version 0x7d01 -> 32001 -> 0.3.20.1
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x01\x7d\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.20.1/ cpe:/a:bitcoin:bitcoind:0.3.20.1/
+# Version 0x7d02 -> 32002 -> 0.3.20.2
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x02\x7d\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.20.2/ cpe:/a:bitcoin:bitcoind:0.3.20.2/
+# Version 0x7d64 -> 32100 -> 0.3.21
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x64\x7d\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.21/ cpe:/a:bitcoin:bitcoind:0.3.21/
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x64\x7d\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\x02(\..)....$|s p/Bitcoin digital currency server/ v/0.3.21$1/ cpe:/a:bitcoin:bitcoind:0.3.21$1/
+# Version 0x7dc8 -> 32200 -> 0.3.22
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\xc8\x7d\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.22/ cpe:/a:bitcoin:bitcoind:0.3.22/
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\xc8\x7d\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\x02(\..)....$|s p/Bitcoin digital currency server/ v/0.3.22$1/ cpe:/a:bitcoin:bitcoind:0.3.22$1/
+# Version 0x7e2c -> 32300 -> 0.3.23
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x2c\x7e\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.23/ cpe:/a:bitcoin:bitcoind:0.3.23/
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x2c\x7e\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\x02(\..)....$|s p/Bitcoin digital currency server/ v/0.3.23$1/ cpe:/a:bitcoin:bitcoind:0.3.23$1/
+# Version 0x7e90 -> 32400 -> 0.3.24
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x90\x7e\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ v/0.3.24/ cpe:/a:bitcoin:bitcoind:0.3.24/
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0\x90\x7e\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\x02(\..)....$|s p/Bitcoin digital currency server/ v/0.3.24$1/ cpe:/a:bitcoin:bitcoind:0.3.24$1/
+
+# https://bitcointalk.org/index.php?topic=55852.0
+# http://bitcoin.org/en/alert/2012-02-18-protocol-change
+# "In June 2010 the Bitcoin reference software version 0.2.10 introduced a
+# change to the protocol: the 'version' messages exchanged by nodes at
+# connection time would have a new format that included checksum values to
+# detect corruption by broken networks."
+
+# Bitcoin "version" message with protocol version 70001
+# https://en.bitcoin.it/wiki/BIP_0037#Extensions_to_existing_messages
+# https://en.bitcoin.it/wiki/BIP_0060 "The protocol version was upgraded to
+# 70001, and the (now accepted) BIP 0037 became implemented."
+#  4 bytes magic number:    "\xf9\xbe\xb4\xd9"
+# 12 bytes command:         "version\0\0\0\0\0"
+#  4 bytes length
+#  4 bytes checksum
+#  4 bytes version          "\x71\x11\x01\0"
+#  8 bytes services bitfield: "\x01\0\0\0\0\0\0\0"
+#  8 bytes timestamp
+# 16 bytes IPv4-compatible client IP: "\0\0\0\0\0\0\0\0\0\0\xff\xff...."
+#  2 bytes client port
+# 16 bytes IPv4-compatible server IP: "\0\0\0\0\0\0\0\0\0\0\xff\xff...."
+#  2 bytes server port
+#  8 bytes nonce
+#  1 byte  user agent string length
+# variable user agent string https://en.bitcoin.it/wiki/BIP_0014
+#  4 bytes last block
+#  1 byte  relay             https://en.bitcoin.it/wiki/BIP_0037#Extensions_to_existing_messages
+
+# Version numbers now correspond only to protocol changes, not software releases.
+# Version 0x011171 -> 70001 0.7.1
+match bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0.\0\0\0....\x71\x11\x01\0\0\0\0\0\0\0\0\0........\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff.............../Bitpeer:([\w._-]+)/\0\0\0\0\x01$|s p/Bitpeer/ v/$1/
+
+softmatch bitcoin m|^\xf9\xbe\xb4\xd9version\0\0\0\0\0\x55\0\0\0..\0\0\x01\0\0\0\0\0\0\0........\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff......\x01\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\xff\xff..............\0....$|s p/Bitcoin digital currency server/ cpe:/a:bitcoin:bitcoind/
+
+match bitcoin-jsonrpc m|^HTTP/1\.0 401 Authorization Required\r\n(?:[^\r\n]+\r\n)*?Server: bitcoin-json-rpc/([\w._-]+)\r\n|s p/Bitcoin JSON-RPC/ v/$1/ cpe:/a:bitcoin:bitcoind:$1/
+match bitcoin-jsonrpc m|^HTTP/1\.0 401 Authorization Required\r\n(?:[^\r\n]+\r\n)*?Server: bitcoin-json-rpc\r\n|s p/Bitcoin JSON-RPC/ cpe:/a:bitcoin:bitcoind/
+match bitcoin-jsonrpc m|^HTTP/1\.1 403 Forbidden\r\n(?:[^\r\n]+\r\n)*?Server: bitcoin-json-rpc/([\w._-]+)\r\n|s p/Bitcoin JSON-RPC/ v/$1/ cpe:/a:bitcoin:bitcoind:$1/
+match bitcoin-jsonrpc m|^HTTP/1\.1 403 Forbidden\r\n(?:[^\r\n]+\r\n)*?Server: dash-json-rpc/v(\d[\w._-]+)\r\n|s p/Dash cryptocurrency JSON-RPC/ v/$1/
+
+match bitcoin m|^\xbf\x0ck\xbdgetsporks\0\0\0\0\0\0\0\]\xf6\xe0\xe2| p/Dash cryptocurrency server/ i/Bitcoin fork/
+
+# Bittorrent Client 3.2.1b on Linux 2.4.X
+match bittorrent m|^\x13BitTorrent protocol\0\0\0\0\0\0\0\0| p/Bittorrent P2P client/
+# BMC Software Patrol Agent 3.45 and HP Patrol Agent
+match softwarepatrol m|^\0\0\0\x17i\x02\x03..\0\x05\x02\0\x04\x02\x04\x03..\0\x03\x04\0\0\0|s p|BMC/HP Software Patrol Agent| cpe:/a:bmc:patrol_agent/
+match scmbug m|^SCMBUG-SERVER RELEASE_([-\w_.]+) \d+\n| p/Scmbug bugtracker/ v/$1/
+
+match bro m|^\0\0\0\x08\x01\0{10}\x11\0\0\0\x07\0\0\x0b\xb8\0\0\0\x1a\0\0..\0\0\0\0\x08\x02...\0{7}mi\x01\0\0\0\x01\x90\x01\0\0\0\0\x10peer_description\x02\0\0\0\0\x01\0{14}\x01\x01\0\0\0\x02\x8a\x01\0\x08\x04\0\x01\0\0\0\0\x01\x01\0\0\0\x03\x8c\x01\0\x01\0\0\0\0\x02\0\0\0\x01\0\x02\x01\x01\0\0\0\x04\x88\x06\0\x01\0\0\0\0\x02\0\0\0\x03bro|s p/Bro IDS control service/ cpe:/a:bro:bro/
+
+# Tolis BRU (Backup and Restore Utility)
+match bru m|^0x[0-9a-fA-F]{32}L| p/Tolis BRU/ i/Backup and Restore Utility/
+
+# Bruker AXS X-ray machines (how cool is that!?!?) (Brandon)
+match bruker-axs m|^\[ANGLESTATUS.*\[XYZSTATUS.*\[ZOOMSTATUS.*\[INSTRUMENTSTATUS.*XRAYSON=1|s p/Bruker AXS X-ray controller status/ i/X-rays: On/ d/specialized/
+match bruker-axs m|^\[ANGLESTATUS.*\[XYZSTATUS.*\[ZOOMSTATUS.*\[INSTRUMENTSTATUS.*XRAYSON=0|s p/Bruker AXS X-ray controller status/ i/X-rays: Off/ d/specialized/
+
+match buildservice m|^200 HELLO - BuildForge Agent v([\w._-]+)\n| p/BuildForge Agent/ v/$1/
+match buildservice m|^\$\0\0\0\$\0\0\x000RAR\0 \0\0.\xe2\x02\0\xc4G\x0f\0\0\0\0\0\0\0\0\0\0\0\0\0|s p/Xoreax IncrediBuild/ o/Windows/ cpe:/o:microsoft:windows/a
+
+match burk-autopilot m|^\x19\0\0\0\0\0\x0f\xbeB!\x012\x02\xd1\x02\x032\x02p\0\x062\x02\x80\0$| p/Burk AutoPilot Plus remote management/ d/remote management/
+
+match bzfs m|^BZFS\d\d\d\d\0$| p/BZFlag game server/
+match bzfs m|^BZFS\d\d\d\d\r\n\r\n$| p/BZFlag game server/
+

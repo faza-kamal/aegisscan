@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#dc2626">
+    <title>AegisScan Dashboard</title>
+    <!-- Inline CSS: tidak bergantung pada file eksternal sama sekali -->
+    <style>
+    /* ── RESET & VARS ── */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+        --bg:       #0a0a0a;
+        --bg2:      #121212;
+        --bg3:      #1a1a1a;
+        --red:      #dc2626;
+        --red2:     #991b1b;
+        --red3:     #ef4444;
+        --neon:     #ff2244;
+        --white:    #f1f5f9;
+        --g1:       #d1d5db;
+        --g2:       #9ca3af;
+        --g3:       #4b5563;
+        --g4:       #334155;
+        --grad:     linear-gradient(135deg,#991b1b,#dc2626);
+        --glow:     0 0 20px rgba(220,38,38,.45);
+        --glow2:    0 0 30px rgba(220,38,38,.65);
+    }
+    body {
+        font-family:'Segoe UI',Roboto,sans-serif;
+        background:var(--bg);
+        color:var(--white);
+        min-height:100vh;
+        overflow-x:hidden;
+        line-height:1.6;
+    }
+
+    /* ── LOADING ── */
+    #loadingScreen {
+        position:fixed;inset:0;
+        background:#050505;
+        display:flex;flex-direction:column;
+        justify-content:center;align-items:center;
+        z-index:9999;
+        transition:opacity .5s,visibility .5s;
+    }
+    #loadingScreen.hidden { opacity:0;visibility:hidden; }
+    .ld-logo {
+        font-size:3rem;font-weight:800;letter-spacing:4px;
+        color:var(--red);
+        text-shadow:0 0 20px var(--neon),0 0 40px rgba(220,38,38,.3);
+        margin-bottom:1.5rem;
+        animation:glow 2s infinite;
+    }
+    @keyframes glow {
+        0%,100%{text-shadow:0 0 10px var(--red);}
+        50%    {text-shadow:0 0 25px var(--neon),0 0 40px var(--neon);}
+    }
+    .ld-bar {
+        width:260px;height:4px;
+        background:rgba(255,255,255,.08);
+        border-radius:2px;overflow:hidden;
+        margin-bottom:1rem;
+    }
+    .ld-prog {
+        height:100%;background:var(--grad);
+        animation:ldprog 1.4s ease-in-out infinite;
+    }
+    @keyframes ldprog{0%{width:0}60%{width:70%}100%{width:100%}}
+    .ld-sub { color:var(--g2);font-size:.85rem;letter-spacing:2px; }
+
+    /* ── DASHBOARD WRAPPER ── */
+    #dashboard { min-height:100vh; }
+    #dashboard.hidden { display:none; }
+
+    /* ── NAVBAR ── */
+    nav {
+        background:rgba(12,12,12,.97);
+        border-bottom:2px solid var(--red);
+        padding:.9rem 2rem;
+        display:flex;justify-content:space-between;align-items:center;
+        position:sticky;top:0;z-index:100;
+        backdrop-filter:blur(12px);
+        box-shadow:0 4px 24px rgba(220,38,38,.2);
+        flex-wrap:wrap;gap:.75rem;
+    }
+    .brand {
+        display:flex;align-items:center;gap:.75rem;
+        font-size:1.4rem;font-weight:800;letter-spacing:1px;
+    }
+    .brand-icon { color:var(--red);font-size:1.5rem; }
+    .brand-ver {
+        font-size:.65rem;background:var(--red);
+        padding:.2rem .45rem;border-radius:4px;font-weight:600;
+    }
+    .nav-menu { display:flex;gap:.5rem;flex-wrap:wrap; }
+    .nav-link {
+        color:var(--g1);text-decoration:none;
+        padding:.45rem .9rem;border-radius:7px;
+        transition:all .25s;
+        display:flex;align-items:center;gap:.4rem;
+        font-size:.9rem;
+    }
+    .nav-link:hover { color:var(--red);background:rgba(220,38,38,.1); }
+    .nav-link.active {
+        color:var(--red);background:rgba(220,38,38,.18);
+        border-bottom:2px solid var(--red);
+    }
+    .nav-icon { font-size:1rem; }
+
+    /* ── MAIN CONTENT ── */
+    .wrap { max-width:1300px;margin:0 auto;padding:2rem; }
+    .page { display:none;animation:fadeUp .4s; }
+    .page.active { display:block; }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+    /* ── PAGE HEADER ── */
+    .page-hdr { text-align:center;margin-bottom:2.5rem; }
+    .page-hdr h1 { font-size:2.2rem;color:var(--red);margin-bottom:.4rem; }
+    .page-hdr p  { color:var(--g2);font-size:1rem; }
+
+    /* ── HERO ── */
+    .hero { text-align:center;margin:3rem 0 2rem; }
+    .hero h1 {
+        font-size:3.8rem;font-weight:900;letter-spacing:2px;
+        color:var(--red);
+        text-shadow:0 0 24px rgba(220,38,38,.6);
+        margin-bottom:.75rem;
+    }
+    .hero .sub { font-size:1.35rem;color:var(--g1);margin-bottom:.4rem; }
+    .hero .desc{ font-size:.95rem;color:var(--g2); }
+
+    /* ── STAT CARDS ── */
+    .stats {
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+        gap:1.25rem;margin:2rem 0;
+    }
+    .stat-card {
+        background:var(--bg2);
+        border:2px solid var(--red);
+        border-radius:14px;padding:1.75rem;
+        text-align:center;transition:all .3s;
+    }
+    .stat-card:hover { transform:translateY(-5px);box-shadow:var(--glow); }
+    .stat-ic { font-size:2.2rem;color:var(--red);margin-bottom:.75rem; }
+    .stat-num{ font-size:2rem;font-weight:800;color:var(--white);margin-bottom:.3rem; }
+    .stat-lbl{ color:var(--g2);font-size:.8rem;letter-spacing:1px;text-transform:uppercase; }
+
+    /* ── SECTION TITLE ── */
+    .sec-title {
+        font-size:1.7rem;color:var(--red);
+        margin-bottom:1.75rem;
+        display:flex;align-items:center;gap:.6rem;
+    }
+
+    /* ── CARDS GRID ── */
+    .card-grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+        gap:1.25rem;margin-bottom:2.5rem;
+    }
+    .card {
+        background:var(--bg2);
+        border:2px solid rgba(220,38,38,.28);
+        border-radius:13px;padding:1.75rem;
+        text-align:center;cursor:pointer;transition:all .3s;
+    }
+    .card:hover { border-color:var(--red);transform:translateY(-5px);box-shadow:var(--glow); }
+    .card-ic { font-size:2.6rem;color:var(--red);margin-bottom:.9rem; }
+    .card h3 { color:var(--white);margin-bottom:.4rem;font-size:1.05rem; }
+    .card p  { color:var(--g2);font-size:.85rem; }
+
+    /* ── SCAN TABLE ── */
+    .toolbar {
+        display:flex;justify-content:flex-end;
+        margin-bottom:1.25rem;
+    }
+    .btn {
+        padding:.65rem 1.4rem;
+        background:var(--grad);border:none;border-radius:8px;
+        color:#fff;font-weight:700;cursor:pointer;
+        display:inline-flex;align-items:center;gap:.4rem;
+        font-size:.9rem;transition:all .25s;
+    }
+    .btn:hover { transform:translateY(-2px);box-shadow:0 5px 16px rgba(220,38,38,.4); }
+
+    .tbl-wrap { overflow-x:auto;border-radius:12px;border:1px solid rgba(220,38,38,.2); }
+    table { width:100%;border-collapse:collapse;font-size:.88rem; }
+    thead tr { background:#0d0d0d; }
+    th {
+        padding:13px 14px;text-align:left;
+        color:var(--red);font-size:.78rem;
+        text-transform:uppercase;letter-spacing:.5px;
+        white-space:nowrap;border-bottom:1px solid rgba(220,38,38,.25);
+    }
+    td { padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04); }
+    .scan-row { cursor:pointer;transition:background .2s; }
+    .scan-row:hover td { background:rgba(220,38,38,.07); }
+    .mono { font-family:'Courier New',monospace;color:var(--g1); }
+    .dim  { color:var(--g2);font-size:.8rem; }
+
+    /* badges */
+    .badge {
+        display:inline-block;padding:3px 10px;
+        border-radius:20px;font-size:.73rem;font-weight:700;
+    }
+    .b-ok  { background:#064e3b;color:#6ee7b7; }
+    .b-run { background:#1e3a5f;color:#93c5fd; }
+    .b-sub { background:#312e81;color:#a5b4fc; }
+    .b-tcp { background:#451a03;color:#fcd34d; }
+
+    /* expand panel */
+    .xtr td { padding:0; }
+    .xpanel {
+        background:#0d0d0d;
+        border-top:1px solid rgba(220,38,38,.18);
+        padding:1.1rem 1.4rem;
+    }
+    .host-block { margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(220,38,38,.1); }
+    .host-block:last-child { border:none;margin:0;padding:0; }
+    .host-hdr  { display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-bottom:.65rem; }
+    .ip-tag    { background:#1e40af;color:#fff;padding:3px 13px;border-radius:20px;font-weight:700;font-family:monospace;font-size:.85rem; }
+    .hn-tag    { color:var(--g2);font-family:monospace;font-size:.82rem; }
+    .os-tag    { background:#064e3b;color:#6ee7b7;padding:2px 9px;border-radius:10px;font-size:.75rem; }
+    .port-list { display:flex;flex-direction:column;gap:.3rem;padding-left:.4rem; }
+    .port-row  { display:flex;align-items:center;gap:.8rem;font-size:.82rem;flex-wrap:wrap; }
+    .pnum      { background:rgba(220,38,38,.15);color:var(--red3);padding:2px 8px;border-radius:4px;font-family:monospace;font-weight:700;min-width:48px;text-align:center; }
+    .psvc      { color:var(--g1);min-width:90px; }
+    .pbanner   { color:var(--g3);font-family:monospace;font-size:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px; }
+    .no-ports  { color:var(--g3);font-style:italic;font-size:.82rem; }
+
+    /* empty state */
+    .empty {
+        text-align:center;padding:4rem 2rem;color:var(--g3);
+    }
+    .empty .em-ic { font-size:3rem;margin-bottom:1rem;display:block; }
+    .empty p { margin-bottom:.6rem; }
+    .empty code {
+        background:rgba(255,255,255,.05);padding:.35rem .75rem;
+        border-radius:6px;font-family:monospace;font-size:.82rem;color:var(--g2);
+    }
+
+    /* ── ABOUT PAGE ── */
+    .about-wrap { max-width:860px;margin:0 auto; }
+    .section-box {
+        background:var(--bg2);
+        border:2px solid rgba(220,38,38,.28);
+        border-radius:13px;padding:1.75rem;margin-bottom:1.75rem;
+    }
+    .section-box h3 {
+        color:var(--red);margin-bottom:1.4rem;
+        display:flex;align-items:center;gap:.5rem;font-size:1.1rem;
+    }
+    .info-grid {
+        display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.9rem;
+    }
+    .ibox {
+        background:rgba(220,38,38,.05);
+        border:1px solid rgba(220,38,38,.25);
+        border-radius:8px;padding:.9rem;text-align:center;
+    }
+    .ilbl { color:var(--g2);font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem; }
+    .ival { color:var(--white);font-weight:700;font-size:.9rem; }
+
+    .cli-block { margin-bottom:1.4rem; }
+    .cli-lbl   { color:var(--g2);font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem; }
+    .cli-block pre {
+        background:#0a0a0a;border:1px solid rgba(220,38,38,.2);
+        border-radius:8px;padding:.9rem 1.1rem;overflow-x:auto;
+    }
+    .cli-block code { font-family:'Courier New',monospace;font-size:.85rem;color:#93c5fd;line-height:1.7; }
+
+    .disclaimer {
+        background:rgba(220,38,38,.05);
+        border:1px solid rgba(220,38,38,.28);
+        border-radius:8px;padding:1.25rem;margin-top:1.5rem;
+    }
+    .disclaimer h4 { color:var(--red);margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem; }
+    .disclaimer p  { color:var(--g1);line-height:1.6;margin-bottom:.4rem;font-size:.9rem; }
+    .copy { color:var(--g2);font-size:.82rem;margin-top:.6rem; }
+
+    /* ── TOAST ── */
+    #toast {
+        position:fixed;bottom:20px;right:20px;
+        background:#064e3b;color:#d1fae5;
+        padding:10px 22px;border-radius:8px;
+        display:none;z-index:9999;
+        box-shadow:var(--glow);font-size:.88rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+        background:rgba(12,12,12,.97);
+        border-top:2px solid var(--red);
+        padding:1.75rem;margin-top:3rem;text-align:center;
+    }
+    .ft-main { color:var(--g1);font-size:.9rem;margin-bottom:.3rem; }
+    .ft-sub  { color:var(--g2);font-size:.82rem; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width:7px;height:7px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--red);border-radius:4px; }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:768px){
+        nav { padding:.75rem 1rem; }
+        .wrap { padding:1rem; }
+        .hero h1 { font-size:2.4rem; }
+        .stats { grid-template-columns:1fr 1fr; }
+        .card-grid { grid-template-columns:1fr; }
+        .pbanner { max-width:160px; }
+        th,td { padding:8px 10px; }
+    }
+    </style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loadingScreen">
+    <div class="ld-logo">&#9039; AEGISSCAN</div>
+    <div class="ld-bar"><div class="ld-prog"></div></div>
+    <div class="ld-sub">NETWORK RECONNAISSANCE DASHBOARD</div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="hidden">
+
+    <!-- Navbar -->
+    <nav>
+        <div class="brand">
+            <span class="brand-icon">&#9039;</span>
+            AEGISSCAN
+            <span class="brand-ver">v3.0</span>
+        </div>
+        <div class="nav-menu">
+            <a href="#" class="nav-link active" data-page="home">
+                <span class="nav-icon">&#8962;</span> Home
+            </a>
+            <a href="#" class="nav-link" data-page="scans">
+                <span class="nav-icon">&#128225;</span> Scan History
+            </a>
+            <a href="#" class="nav-link" data-page="about">
+                <span class="nav-icon">&#8505;</span> About
+            </a>
+        </div>
+    </nav>
+
+    <div class="wrap">
+
+        <!-- ══ HOME PAGE ══ -->
+        <div id="homePage" class="page active">
+
+            <div class="hero">
+                <h1>AEGISSCAN</h1>
+                <p class="sub">Professional Async Network Scanner</p>
+                <p class="desc">TCP Connect &bull; OS Detection &bull; Service Fingerprinting &bull; Subnet Scan</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-ic">&#128225;</div>
+                    <div class="stat-num" id="sSc">—</div>
+                    <div class="stat-lbl">Total Scans</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-ic">&#128421;</div>
+                    <div class="stat-num" id="sHo">—</div>
+                    <div class="stat-lbl">Alive Hosts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-ic">&#128275;</div>
+                    <div class="stat-num" id="sPo">—</div>
+                    <div class="stat-lbl">Open Ports</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-ic">&#127760;</div>
+                    <div class="stat-num" id="sIP">—</div>
+                    <div class="stat-lbl">Unique IPs</div>
+                </div>
+            </div>
+
+            <!-- Quick Access -->
+            <div class="sec-title">&#9889; Quick Access</div>
+            <div class="card-grid">
+                <div class="card" onclick="go('scans')">
+                    <div class="card-ic">&#128203;</div>
+                    <h3>Scan History</h3>
+                    <p>View all past scans with host and port details</p>
+                </div>
+                <div class="card" onclick="loadAll()">
+                    <div class="card-ic">&#8635;</div>
+                    <h3>Refresh Data</h3>
+                    <p>Reload latest stats and scan results</p>
+                </div>
+                <div class="card" onclick="go('about')">
+                    <div class="card-ic">&#9000;</div>
+                    <h3>CLI Usage</h3>
+                    <p>How to run scans from the command line</p>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="sec-title">&#11088; Features</div>
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-ic">&#9889;</div>
+                    <h3>Async Engine</h3>
+                    <p>High-speed async TCP connect with tunable timing profiles</p>
+                </div>
+                <div class="card">
+                    <div class="card-ic">&#128270;</div>
+                    <h3>Service Fingerprinting</h3>
+                    <p>Identifies services and versions via banner analysis</p>
+                </div>
+                <div class="card">
+                    <div class="card-ic">&#128187;</div>
+                    <h3>OS Detection</h3>
+                    <p>Detects OS from TTL, open ports, and service banners</p>
+                </div>
+                <div class="card">
+                    <div class="card-ic">&#128190;</div>
+                    <h3>Persistent Storage</h3>
+                    <p>All results in SQLite — queryable, exportable, reportable</p>
+                </div>
+            </div>
+        </div><!-- /homePage -->
+
+        <!-- ══ SCAN HISTORY PAGE ══ -->
+        <div id="scansPage" class="page">
+            <div class="page-hdr">
+                <h1>&#128225; Scan History</h1>
+                <p>All recorded scans — click a row to expand host details</p>
+            </div>
+            <div class="toolbar">
+                <button class="btn" onclick="loadAll()">&#8635; Refresh</button>
+            </div>
+            <div id="scanWrap">
+                <div class="empty">
+                    <span class="em-ic">&#128225;</span>
+                    <p>Loading scan history…</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ ABOUT PAGE ══ -->
+        <div id="aboutPage" class="page">
+            <div class="page-hdr">
+                <h1>&#9000; About &amp; CLI Usage</h1>
+                <p>AegisScan v3.0 — Professional Async Network Scanner</p>
+            </div>
+            <div class="about-wrap">
+                <div class="section-box">
+                    <h3>&#8505; Platform Details</h3>
+                    <div class="info-grid">
+                        <div class="ibox"><div class="ilbl">Version</div><div class="ival">3.0</div></div>
+                        <div class="ibox"><div class="ilbl">Engine</div><div class="ival">Async TCP</div></div>
+                        <div class="ibox"><div class="ilbl">Stack</div><div class="ival">Python / asyncio</div></div>
+                        <div class="ibox"><div class="ilbl">Database</div><div class="ival">SQLite</div></div>
+                        <div class="ibox"><div class="ilbl">Service DB</div><div class="ival">nmap-services</div></div>
+                        <div class="ibox"><div class="ilbl">Reports</div><div class="ival">JSON / HTML / PDF</div></div>
+                    </div>
+                </div>
+
+                <div class="section-box">
+                    <h3>&#9000; CLI Usage</h3>
+                    <div class="cli-block"><div class="cli-lbl">Scan a single host</div>
+                        <pre><code>python3 main.py --scan 192.168.1.1</code></pre></div>
+                    <div class="cli-block"><div class="cli-lbl">Scan subnet with timing profile</div>
+                        <pre><code>python3 main.py --scan 192.168.1.0/24 --ports top100 --timing t4</code></pre></div>
+                    <div class="cli-block"><div class="cli-lbl">Scan specific port range</div>
+                        <pre><code>python3 main.py --scan 192.168.1.1 --ports 1-1000 --timing aggressive</code></pre></div>
+                    <div class="cli-block"><div class="cli-lbl">Generate report</div>
+                        <pre><code>python3 main.py --report 1 --format html</code></pre></div>
+                    <div class="cli-block"><div class="cli-lbl">Start this dashboard</div>
+                        <pre><code>python3 main.py --dashboard --host 127.0.0.1 --dash-port 5000</code></pre></div>
+                    <div class="cli-block"><div class="cli-lbl">Timing profiles</div>
+                        <pre><code>paranoid(t0)  sneaky(t1)  polite(t2)  normal(t3)  aggressive(t4)  insane(t5)</code></pre></div>
+                    <div class="cli-block"><div class="cli-lbl">Port spec examples</div>
+                        <pre><code>80            single port
+80,443,8080   comma-separated
+1-1000        range
+top10/top100  most common
+-             all 65535 ports</code></pre></div>
+                    <div class="disclaimer">
+                        <h4>&#9888; Legal Disclaimer</h4>
+                        <p>AegisScan is intended for authorized security testing only. Only scan systems you own or have explicit written permission to test.</p>
+                        <p class="copy">&copy; 2025 AegisScan v3.0 — For authorized use only</p>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /aboutPage -->
+
+    </div><!-- /wrap -->
+
+    <footer>
+        <div class="ft-main">&#9039; AegisScan v3.0 — Network Reconnaissance Dashboard</div>
+        <div class="ft-sub">For authorized security testing only</div>
+    </footer>
+</div><!-- /dashboard -->
+
+<div id="toast">&#10003; Refreshed</div>
+
+<script>
+// ── API ──────────────────────────────────────────────────────────────────────
+async function api(u){
+    const r=await fetch(u);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+}
+
+// ── BADGE ────────────────────────────────────────────────────────────────────
+function badge(v){
+    const m={completed:'b-ok',running:'b-run',subnet:'b-sub',tcp_connect:'b-tcp'};
+    return `<span class="badge ${m[v]||'b-run'}">${v.toUpperCase()}</span>`;
+}
+
+// ── HTML ESCAPE ──────────────────────────────────────────────────────────────
+function esc(s){
+    if(!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── LOAD STATS ───────────────────────────────────────────────────────────────
+async function loadStats(){
+    try{
+        const s=await api('/api/stats');
+        document.getElementById('sSc').textContent=s.total_scans||0;
+        document.getElementById('sHo').textContent=s.alive_hosts||0;
+        document.getElementById('sPo').textContent=s.open_ports||0;
+        document.getElementById('sIP').textContent=s.unique_ips||0;
+    }catch(e){ console.warn('stats:',e); }
+}
+
+// ── LOAD SCANS ───────────────────────────────────────────────────────────────
+async function loadScans(){
+    const w=document.getElementById('scanWrap');
+    try{
+        const scans=await api('/api/scans?limit=50');
+        if(!scans.length){
+            w.innerHTML=`<div class="empty">
+                <span class="em-ic">&#128225;</span>
+                <p>No scans yet — run one from the CLI</p>
+                <code>python3 main.py --scan 192.168.1.1</code>
+            </div>`;
+            return;
+        }
+        let h=`<div class="tbl-wrap"><table>
+            <thead><tr>
+                <th>ID</th><th>Type</th><th>Target</th><th>Status</th>
+                <th>Hosts</th><th>Ports</th><th>Duration</th><th>Started</th>
+            </tr></thead><tbody>`;
+        scans.forEach(s=>{
+            const dur=s.duration_s?s.duration_s.toFixed(1)+'s':'—';
+            h+=`<tr class="scan-row" onclick="expand(${s.id},this)">
+                <td><b>#${s.id}</b></td>
+                <td>${badge(s.scan_type)}</td>
+                <td class="mono">${esc(s.target)}</td>
+                <td>${badge(s.status)}</td>
+                <td>${s.hosts_found}</td>
+                <td>${s.ports_open}</td>
+                <td class="dim">${dur}</td>
+                <td class="dim">${(s.started_at||'').slice(0,19)}</td>
+            </tr>
+            <tr class="xtr" id="xtr${s.id}" style="display:none">
+                <td colspan="8">
+                    <div class="xpanel" id="xp${s.id}">&#9203; Loading…</div>
+                </td>
+            </tr>`;
+        });
+        h+='</tbody></table></div>';
+        w.innerHTML=h;
+    }catch(e){
+        w.innerHTML=`<div class="empty"><span class="em-ic">&#9888;</span><p>Error: ${esc(e.message)}</p></div>`;
+    }
+}
+
+// ── EXPAND ROW ───────────────────────────────────────────────────────────────
+async function expand(id,tr){
+    const xtr=document.getElementById('xtr'+id);
+    const xp =document.getElementById('xp'+id);
+    if(xtr.style.display!=='none'){xtr.style.display='none';return;}
+    xtr.style.display='table-row';
+    try{
+        const d=await api('/api/scan/'+id);
+        if(!d||!d.hosts){xp.innerHTML='No data';return;}
+        const alive=d.hosts.filter(h=>h.is_alive);
+        if(!alive.length){xp.innerHTML='<span style="color:#4b5563">No alive hosts</span>';return;}
+        let h='';
+        alive.forEach(host=>{
+            const os=host.os_guess?`<span class="os-tag">${esc(host.os_guess)}</span>`:'';
+            const hn=host.hostname?`<span class="hn-tag">${esc(host.hostname)}</span>`:'';
+            h+=`<div class="host-block">
+                <div class="host-hdr">
+                    <span class="ip-tag">${esc(host.ip)}</span>${hn}${os}
+                </div>`;
+            const ports=host.ports||[];
+            if(ports.length){
+                h+=`<div class="port-list">`;
+                ports.forEach(p=>{
+                    const bn=p.banner?`<span class="pbanner" title="${esc(p.banner)}">${esc(p.banner.slice(0,60))}</span>`:'';
+                    h+=`<div class="port-row">
+                        <span class="pnum">${p.port}</span>
+                        <span class="psvc">${esc(p.service||'unknown')}</span>
+                        ${bn}
+                    </div>`;
+                });
+                h+=`</div>`;
+            }else{
+                h+=`<p class="no-ports">No open ports detected</p>`;
+            }
+            h+=`</div>`;
+        });
+        xp.innerHTML=h;
+    }catch(e){
+        xp.innerHTML=`<span style="color:#ef4444">Error: ${esc(e.message)}</span>`;
+    }
+}
+
+// ── REFRESH ALL ──────────────────────────────────────────────────────────────
+async function loadAll(){
+    await Promise.all([loadStats(),loadScans()]);
+    const t=document.getElementById('toast');
+    t.style.display='block';
+    setTimeout(()=>t.style.display='none',2000);
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────────────────────
+function go(page){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+    const map={home:'homePage',scans:'scansPage',about:'aboutPage'};
+    const pg=document.getElementById(map[page]);
+    if(pg) pg.classList.add('active');
+    const lk=document.querySelector(`[data-page="${page}"]`);
+    if(lk) lk.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-link').forEach(lk=>{
+    lk.addEventListener('click',e=>{
+        e.preventDefault();
+        const p=lk.getAttribute('data-page');
+        if(p) go(p);
+    });
+});
+
+// Loading → show dashboard
+window.addEventListener('load',()=>{
+    setTimeout(()=>{
+        document.getElementById('loadingScreen').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+        loadAll();
+    },1000);
+});
+
+// Auto-refresh 30s
+setInterval(loadAll,30000);
+</script>
+</body>
+</html>

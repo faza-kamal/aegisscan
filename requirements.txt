@@ -1,0 +1,31 @@
+# AegisScan v3.0 — Requirements
+# ──────────────────────────────────────────────────────
+# ZERO external packages required for core functionality.
+# stdlib: asyncio, sqlite3, socket, re, logging, argparse
+#
+# Install optionals for full features:
+#   pip install -r requirements.txt
+
+# Web Dashboard
+flask>=2.0.0
+flask-cors>=3.0.0
+
+# Production-grade password hashing (bcrypt for auth)
+passlib[bcrypt]>=1.7.4
+
+# PDF Reports
+reportlab>=3.6.0
+
+# Config file support
+pyyaml>=6.0
+
+# Better console logging
+colorlog>=6.0.0
+
+# Performance: 2-4× faster async (Linux/macOS only)
+# uvloop>=0.17.0
+
+# Dev / Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
