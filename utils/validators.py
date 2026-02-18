@@ -1,52 +1,84 @@
 """
 utils/validators.py
-Input validation helpers used across the codebase.
+Input validation and sanitization functions
 """
-
-from __future__ import annotations
 
 import ipaddress
 import re
 from typing import Tuple
 
 
-def validate_ip(ip: str) -> Tuple[bool, str]:
-    """Validate IPv4 address."""
-    try:
-        ipaddress.IPv4Address(ip)
-        return True, ""
-    except ValueError:
-        return False, f"Invalid IPv4 address: {ip!r}"
-
-
-def validate_cidr(cidr: str) -> Tuple[bool, str]:
-    """Validate CIDR notation (e.g. 192.168.1.0/24)."""
-    try:
-        ipaddress.IPv4Network(cidr, strict=False)
-        return True, ""
-    except ValueError:
-        return False, f"Invalid CIDR: {cidr!r}"
-
-
 def validate_target(target: str) -> Tuple[bool, str]:
-    """Validate scan target — IP or CIDR."""
-    if "/" in target:
-        return validate_cidr(target)
-    return validate_ip(target)
+    """
+    Validate that target is a valid IP address or CIDR subnet.
+    
+    Args:
+        target: IP address (e.g. "192.168.1.1") or CIDR (e.g. "192.168.1.0/24")
+    
+    Returns:
+        (is_valid, error_message) tuple
+    """
+    if not target or not isinstance(target, str):
+        return (False, "Target must be a non-empty string")
+    
+    target = target.strip()
+    
+    try:
+        # Try to parse as IP network (supports both single IPs and CIDR)
+        ipaddress.ip_network(target, strict=False)
+        return (True, "")
+    except ValueError as e:
+        return (False, f"Invalid IP address or CIDR: {e}")
 
 
 def validate_port(port: int) -> Tuple[bool, str]:
-    """Validate single port number."""
+    """
+    Validate that port number is in valid range [1-65535].
+    
+    Args:
+        port: Port number to validate
+    
+    Returns:
+        (is_valid, error_message) tuple
+    """
     if not isinstance(port, int):
-        return False, f"Port must be int, got {type(port).__name__}"
-    if not (1 <= port <= 65535):
-        return False, f"Port {port} out of range [1, 65535]"
-    return True, ""
+        return (False, "Port must be an integer")
+    
+    if port < 1 or port > 65535:
+        return (False, f"Port {port} out of valid range [1-65535]")
+    
+    return (True, "")
 
 
-def sanitize_banner(banner: str, max_len: int = 512) -> str:
-    """Strip non-printable chars from banner, truncate to max_len."""
-    if not banner:
+def sanitize_banner(banner: str, max_length: int = 500) -> str:
+    """
+    Sanitize a service banner by:
+    - Truncating to max_length
+    - Removing control characters except newlines/tabs
+    - Stripping leading/trailing whitespace
+    
+    Args:
+        banner: Raw banner string
+        max_length: Maximum allowed length (default: 500)
+    
+    Returns:
+        Sanitized banner string
+    """
+    if not banner or not isinstance(banner, str):
         return ""
-    cleaned = re.sub(r"[^\x20-\x7e\r\n\t]", ".", banner)
-    return cleaned[:max_len].strip()
+    
+    # Remove control characters except \n, \r, \t
+    # Keep printable ASCII + common whitespace
+    sanitized = re.sub(r'[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\x9f]', '', banner)
+    
+    # Truncate
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length] + "..."
+    
+    # Strip and collapse multiple spaces
+    sanitized = ' '.join(sanitized.split())
+    
+    return sanitized
+
+
+__all__ = ["validate_target", "validate_port", "sanitize_banner"]
