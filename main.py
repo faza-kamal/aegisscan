@@ -35,6 +35,7 @@ from core.scanner_engine import ScanEngine, ScanStats, HostResult
 from core.timing import get_timing
 from core.os_detect import OSDetector
 from core.service_fingerprint import ServiceFingerprinter
+from core.web_recon import WebRecon, PortAnalyzer
 from database.repository import Repository
 from database.migrations import migrate
 from utils.constants import ScanType
@@ -280,6 +281,11 @@ Examples:
     b.add_argument("--banner",     metavar="TARGET",  help="Grab service banner")
     b.add_argument("--port",       metavar="PORT",    type=int, help="Port for --banner")
 
+    rec = g("Web / Domain Recon")
+    rec.add_argument("--recon",    metavar="TARGET",  help="Domain/IP recon (DNS, HTTP headers, tech stack)")
+    rec.add_argument("--subdomains", action="store_true", help="Also check common subdomains (use with --recon)")
+    rec.add_argument("--analyze",  metavar="SCAN_ID", type=int, help="Port dominance + OS distribution analysis from scan history")
+
     bm = g("Benchmark")
     bm.add_argument("--benchmark", metavar="TARGET",  help="Measure scan throughput")
 
@@ -341,6 +347,26 @@ def main() -> None:
                 else:
                     print("  Port closed or filtered")
             asyncio.run(_grab())
+
+        elif args.recon:
+            wr = WebRecon()
+            async def _run_recon():
+                result = await wr.recon(
+                    args.recon,
+                    check_subdomains=args.subdomains,
+                    grab_http=True,
+                )
+                wr.print_recon(result)
+            asyncio.run(_run_recon())
+
+        elif args.analyze:
+            data = repo.get_scan(args.analyze)
+            if not data:
+                log.error(f"Scan {args.analyze} not found"); sys.exit(1)
+            pa = PortAnalyzer()
+            dominance, os_dist = pa.analyze(data)
+            hosts = [h for h in data.get("hosts", []) if h.get("is_alive")]
+            print(pa.format_report(dominance, os_dist, len(hosts)))
 
         elif args.benchmark:
             asyncio.run(_benchmark(args.benchmark, args.ports, args.timing))

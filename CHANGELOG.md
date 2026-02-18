@@ -5,7 +5,66 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [4.0.0] — 2025-02-17
+## [4.1.0] — 2025-02-18
+
+### Bug Fixes
+- **`core/scanner_engine.py` — `_resolve()` logic error & dead code removed**
+  - Fungsi `_resolve()` sebelumnya rusak total: tubuh fungsi terpotong di file
+    (hanya ada `ip, 0)),` dan sisa fragmen — method definition hilang)
+  - Diperbaiki menjadi implementasi bersih: satu call `getnameinfo()` tanpa
+    `getaddrinfo()` redundant yang tidak pernah dipakai
+  - Hemat ~2 detik timeout per host yang di-resolve
+
+- **`reporting/report_generator.py` — XSS via banner/hostname injection**
+  - Sebelumnya hanya `.replace("<", "&lt;")` parsial, field lain (service, state,
+    hostname, os_guess) tidak di-escape sama sekali
+  - Diperbaiki dengan `html.escape()` konsisten untuk semua nilai dari scan data
+  - Attack vector: banner `<script>alert(1)</script>` dari target server bisa
+    execute JS saat report HTML dibuka di browser
+
+- **`core/os_detect.py` — `detect_from_ttl()` dead code didokumentasikan**
+  - Fungsi ini tidak pernah bisa dipanggil dari connect scan (TTL tidak accessible
+    via `asyncio.open_connection()`) tapi tidak ada keterangan apapun
+  - Ditambah docstring eksplisit: "ONLY usable with raw socket / scapy (v4 SYN scan)"
+  - Tidak dihapus karena akan digunakan di v4.0 SYN scan feature
+
+### Added
+- **`core/web_recon.py` — Web & Domain Reconnaissance Module** (NEW)
+  - `DNSResolver`: async A, AAAA, PTR resolution; optional MX/NS via dnspython
+  - `HTTPGrabber`: async HTTP/HTTPS header grab, deteksi tech stack (nginx, Apache,
+    IIS, PHP, ASP.NET, Cloudflare, Vercel, AWS CloudFront, WordPress, dll)
+  - `PortAnalyzer`: analisis port dominan + distribusi OS dari hasil scan history
+  - `WebRecon`: orkestrator + CLI pretty-printer
+  - Subdomain common check (passive, 30 subdomain)
+  - Zero external deps untuk fitur inti
+
+- **`main.py` — dua CLI flag baru**
+  ```
+  --recon <domain/ip>       DNS info + HTTP headers + tech stack detection
+  --subdomains              Tambahan: cek common subdomains (pakai dengan --recon)
+  --analyze <scan_id>       Port dominance + OS distribution dari scan history
+  ```
+
+- **`core/__init__.py`** — ekspor `WebRecon`, `PortAnalyzer`, `DNSResolver`, `HTTPGrabber`
+
+### Examples
+```bash
+# Recon domain
+python3 main.py --recon github.com
+
+# Recon + cek subdomains
+python3 main.py --recon target.com --subdomains
+
+# Analisis port dominan dari scan sebelumnya
+python3 main.py --analyze 3
+
+# Recon IP langsung
+python3 main.py --recon 192.168.1.1
+```
+
+---
+
+
 
 ### Added
 - **Multi-strategy alive check** — concurrent TCP probes across 12 ports;

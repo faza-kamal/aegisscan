@@ -8,6 +8,7 @@ from core.timing        import get_timing, RTOTracker
 from core.os_detect     import OSDetector
 from core.service_fingerprint import ServiceFingerprinter, fingerprint
 from core.scanner_engine import ScanEngine, PortResult, HostResult, ScanStats
+from core.web_recon     import WebRecon, PortAnalyzer, DNSResolver, HTTPGrabber
 
 __all__ = [
     "ScanEngine", "PortResult", "HostResult", "ScanStats",
@@ -15,4 +16,5 @@ __all__ = [
     "get_timing", "RTOTracker",
     "OSDetector",
     "ServiceFingerprinter", "fingerprint",
+    "WebRecon", "PortAnalyzer", "DNSResolver", "HTTPGrabber",
 ]

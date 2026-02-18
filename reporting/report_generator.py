@@ -7,6 +7,7 @@ Pure template rendering for HTML (no external deps beyond Jinja2/stdlib).
 
 from __future__ import annotations
 
+import html as html_lib
 import json
 import os
 from datetime import datetime, timezone
@@ -75,15 +76,19 @@ class ReportGenerator:
                 continue
             ports_rows = ""
             for p in host.get("ports", []):
-                banner = (p.get("banner") or "")[:80].replace("<", "&lt;").replace(">", "&gt;")
+                banner = html_lib.escape((p.get("banner") or "")[:80])
+                port_svc = html_lib.escape(str(p.get("service", "")))
+                port_state = html_lib.escape(str(p.get("state", "")))
                 ports_rows += f"""
                 <tr>
                   <td><strong>{p['port']}</strong></td>
-                  <td><span class="badge-open">{p['state']}</span></td>
-                  <td>{p['service']}</td>
+                  <td><span class="badge-open">{port_state}</span></td>
+                  <td>{port_svc}</td>
                   <td class="banner-cell">{banner}</td>
                 </tr>"""
-            os_guess = host.get("os_guess", "")
+            os_guess = html_lib.escape(host.get("os_guess", "") or "")
+            host_ip = html_lib.escape(host.get("ip", ""))
+            host_name = html_lib.escape(host.get("hostname", "") or "")
             ports_section = f"""
             <table>
               <thead><tr><th>Port</th><th>State</th><th>Service</th><th>Banner</th></tr></thead>
@@ -93,8 +98,8 @@ class ReportGenerator:
             hosts_html += f"""
             <div class="host-card">
               <div class="host-header">
-                <span class="host-ip">{host['ip']}</span>
-                <span class="host-name">{host.get('hostname') or ''}</span>
+                <span class="host-ip">{host_ip}</span>
+                <span class="host-name">{host_name}</span>
                 {f'<span class="os-badge">{os_guess}</span>' if os_guess else ''}
               </div>
               {ports_section}

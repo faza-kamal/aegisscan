@@ -132,6 +132,12 @@ class OSDetector:
         """
         Guess OS from observed IP TTL value.
         TTL is decremented each hop, so we look for nearest standard value.
+
+        NOTE: This method requires the raw TTL from the IP header, which is
+        NOT accessible via asyncio.open_connection() (TCP connect scan).
+        Use this only when TTL is obtained from a raw socket / ICMP ping
+        (e.g. scapy-based scan in a future SYN scan implementation).
+        For connect scans, use detect() with banners + open_ports instead.
         """
         # Reconstruct original TTL: round up to nearest standard (64, 128, 255)
         standard_ttls = [64, 128, 255]

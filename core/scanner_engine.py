@@ -350,13 +350,10 @@ class ScanEngine:
     # ── DNS ───────────────────────────────────────────────────────────────────
 
     async def _resolve(self, ip: str) -> Optional[str]:
+        """Reverse-resolve IP to hostname. Returns None if unresolvable."""
         try:
             loop = asyncio.get_running_loop()
-            result = await asyncio.wait_for(
-                loop.getaddrinfo(ip, None, type=socket.SOCK_STREAM),
-                timeout=2.0,
-            )
-            hostname, _, _, _, _ = await asyncio.wait_for(
+            hostname, _ = await asyncio.wait_for(
                 loop.getnameinfo((ip, 0)),
                 timeout=2.0,
             )
