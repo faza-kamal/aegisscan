@@ -1,6 +1,6 @@
-<<<<<<< HEAD
+===========
 # aegisscan
-=======
+===========
 # 🛡️ AegisScan
 
 **Professional async network reconnaissance scanner — Python 3.8+, zero heavy dependencies**
